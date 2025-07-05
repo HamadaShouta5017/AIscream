@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Whisper × Django</title></head>
+<body>
+<h2>📝 音声認識結果：</h2>
+<div id="output"></div>
+
+<script>
+let socket = new WebSocket("ws://localhost:8000/ws/whisper/");
+let recorder, audioChunks = [];
+
+navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.start();
+
+    mediaRecorder.ondataavailable = e => {
+        audioChunks.push(e.data);
+    };
+
+    setInterval(() => {
+        if (audioChunks.length > 0) {
+            const blob = new Blob(audioChunks, { type: "audio/wav" });
+            audioChunks = [];
+
+            blob.arrayBuffer().then(buffer => {
+                socket.send(buffer);
+            });
+        }
+    }, 3000);  // 3秒ごとに送信
+
+    mediaRecorder.onstop = () => stream.getTracks().forEach(t => t.stop());
+});
+
+socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    document.getElementById("output").innerText += "\n" + data.text;
+};
+</script>
+</body>
+</html>
