@@ -1,9 +1,10 @@
 from pathlib import Path
 
+# BASE_DIR の定義（← これがなかった）
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key'
 DEBUG = True
+SECRET_KEY = 'django-insecure-abc123xyz456...'
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
@@ -13,17 +14,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',           # ← Channels追加
-    'transcriber',        # ← 作成したアプリ名
+    'channels',
+    'transcriber',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',     # セッション管理
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # 認証
+    'django.contrib.messages.middleware.MessageMiddleware',     # メッセージ機能
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -32,7 +33,7 @@ ROOT_URLCONF = 'whisper_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'transcriber' / 'templates'],  # ← テンプレートの場所
+        'DIRS': [BASE_DIR / 'transcriber' / 'templates'],  # テンプレートパス
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -45,23 +46,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'whisper_project.wsgi.application'
-ASGI_APPLICATION = 'whisper_project.asgi.application'  # ← Channels設定
+ASGI_APPLICATION = 'whisper_project.asgi.application'
 
-# Channelsで使用するバックエンド（メモリで十分）
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
+# その他よくある設定（必要に応じて追記）
 LANGUAGE_CODE = 'ja'
 TIME_ZONE = 'Asia/Tokyo'
 USE_I18N = True
