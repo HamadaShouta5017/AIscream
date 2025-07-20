@@ -5,35 +5,71 @@
 <h2>📝 音声認識結果：</h2>
 <div id="output"></div>
 
+<button id="startBtn">録音開始</button>
+<button id="stopBtn" disabled>録音停止</button>
+
 <script>
 let socket = new WebSocket("ws://localhost:8000/ws/whisper/");
-let recorder, audioChunks = [];
+let mediaRecorder;
+let audioChunks = [];
 
-navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.start();
+document.getElementById("startBtn").onclick = async () => {
+    audioChunks = [];
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
 
     mediaRecorder.ondataavailable = e => {
         audioChunks.push(e.data);
     };
 
-    setInterval(() => {
-        if (audioChunks.length > 0) {
-            const blob = new Blob(audioChunks, { type: "audio/wav" });
-            audioChunks = [];
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+        audioChunks = [];
 
-            blob.arrayBuffer().then(buffer => {
+        blob.arrayBuffer().then(buffer => {
+            if (socket.readyState === WebSocket.OPEN) {
                 socket.send(buffer);
-            });
-        }
-    }, 3000);  // 3秒ごとに送信
+                console.log("🚀 音声データを送信しました:", buffer.byteLength, "bytes");
+            } else {
+                console.warn("⚠️ WebSocketが開いていません:", socket.readyState);
+            }
+        });
 
-    mediaRecorder.onstop = () => stream.getTracks().forEach(t => t.stop());
-});
+        // マイク停止
+        stream.getTracks().forEach(track => track.stop());
+    };
+
+    mediaRecorder.start();
+    console.log("🎤 録音開始");
+
+    document.getElementById("startBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = false;
+};
+
+document.getElementById("stopBtn").onclick = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+        console.log("🛑 録音停止");
+    }
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("stopBtn").disabled = true;
+};
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
     document.getElementById("output").innerText += "\n" + data.text;
+};
+
+socket.onopen = () => {
+    console.log("🟢 WebSocket接続確立");
+};
+
+socket.onclose = () => {
+    console.log("🔴 WebSocket切断");
+};
+
+socket.onerror = (e) => {
+    console.error("⚠️ WebSocketエラー", e);
 };
 </script>
 </body>
