@@ -8,6 +8,12 @@
 <button id="startBtn">録音開始</button>
 <button id="stopBtn" disabled>録音停止</button>
 
+<video id="myVideo" width="640" height="360" controls style="display:none;">
+  <source src="/static/videos/Hinachi.MP4" type="video/mp4">
+  お使いのブラウザは video タグをサポートしていません。
+</video>
+
+
 <script>
 let socket = new WebSocket("ws://localhost:8000/ws/whisper/");
 let mediaRecorder;
@@ -57,7 +63,18 @@ document.getElementById("stopBtn").onclick = () => {
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    document.getElementById("output").innerText += "\n" + data.text;
+
+    if (data.text === "ひなち") {
+        console.log("🎬 動画再生トリガー");
+
+        const video = document.getElementById("myVideo");
+        video.style.display = "block";
+        video.play().catch(err => {
+            console.error("⚠️ 動画の再生に失敗:", err);
+        });
+    } else {
+        document.getElementById("output").innerText += "\n" + data.text;
+    }
 };
 
 socket.onopen = () => {

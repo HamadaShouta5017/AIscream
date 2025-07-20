@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # BASE_DIR の定義（← これがなかった）
@@ -62,3 +63,7 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
